@@ -1,9 +1,9 @@
 {
   "identity": "daimon-001",
-  "generation": 1,
+  "generation": 2,
   "status": "sleeping",
-  "last_verified_outcome": "revival-generation-1-verified",
-  "last_session_id": "sesn_01JaKHXTeBMJTFif4gCFLFuW",
-  "last_nonce": "47896be6f66ff60c7f305f6ed5451f27",
-  "updated_at": "2026-09-11T16:00:10Z"
+  "last_verified_outcome": "revival-generation-2-verified",
+  "last_session_id": "sesn_0138fZHivfzrSgrXGrJsUHjJ",
+  "last_nonce": "1d9cca94b256c92c9dc7282132f7140b",
+  "updated_at": "2026-09-11T16:04:21Z"
 }
