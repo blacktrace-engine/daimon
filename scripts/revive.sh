@@ -2,6 +2,7 @@
 set -euo pipefail
 
 STATE_FILE="state/daimon.json"
+AUTHORITY_FILE="state/authority.json"
 TMP_FILE="${STATE_FILE}.tmp"
 HISTORY_DIR="state/history"
 trap 'rm -f "$TMP_FILE"' EXIT
@@ -14,6 +15,10 @@ jq -e '
   (.status | type == "string" and length > 0) and
   ((.last_verified_outcome // null) == null or (.last_verified_outcome | type == "string"))
 ' "$STATE_FILE" >/dev/null
+
+[ -f "$AUTHORITY_FILE" ]
+AUTHORITY_SHA256=$(sha256sum "$AUTHORITY_FILE" | awk '{print $1}')
+AUTHORITY_POLICY_VERSION=$(jq -er '.policy_version | select(type == "number" and floor == . and . >= 1)' "$AUTHORITY_FILE")
 
 IDENTITY=$(jq -r '.identity' "$STATE_FILE")
 GENERATION=$(jq -r '.generation' "$STATE_FILE")
@@ -28,7 +33,7 @@ fi
 NONCE=$(openssl rand -hex 16)
 TOPIC="daimon-revival-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
 
-echo "Recovered $IDENTITY generation=$GENERATION last_outcome=$LAST_OUTCOME"
+echo "Recovered $IDENTITY generation=$GENERATION last_outcome=$LAST_OUTCOME authority_sha256=$AUTHORITY_SHA256"
 
 RESPONSE=$(curl -fsS 'https://api.anthropic.com/v1/sessions?beta=true' \
   -H "Authorization: Bearer $ANTHROPIC_TOKEN" \
@@ -108,8 +113,9 @@ trap - EXIT
 
 # Persist an immutable lineage record beside mutable head state. Each record
 # hashes both the recovered state and the newly verified state. From the second
-# journaled generation onward it also hashes the previous lineage entry, making
-# retroactive edits detectable by walking the chain.
+# journaled generation onward it also hashes the previous lineage entry. New
+# records additionally bind the exact authority policy bytes that permitted the
+# wake, preventing silent policy replacement from masquerading as continuity.
 mkdir -p "$HISTORY_DIR"
 HISTORY_FILE=$(printf '%s/%06d.json' "$HISTORY_DIR" "$NEXT_GENERATION")
 test ! -e "$HISTORY_FILE"
@@ -122,6 +128,8 @@ jq -n \
   --arg previous_state_sha256 "$PREVIOUS_STATE_SHA256" \
   --arg state_sha256 "$NEW_STATE_SHA256" \
   --arg previous_history_sha256 "$PREVIOUS_HISTORY_SHA256" \
+  --arg authority_sha256 "$AUTHORITY_SHA256" \
+  --argjson authority_policy_version "$AUTHORITY_POLICY_VERSION" \
   --arg outcome "revival-generation-$NEXT_GENERATION-verified" \
   --arg method "external_exact_message" \
   --arg topic "$TOPIC" \
@@ -135,6 +143,7 @@ jq -n \
     previous_state_sha256:$previous_state_sha256,
     state_sha256:$state_sha256,
     previous_history_sha256:(if $previous_history_sha256 == "" then null else $previous_history_sha256 end),
+    authority:{policy_version:$authority_policy_version, sha256:$authority_sha256},
     verified_outcome:$outcome,
     verification:{method:$method, topic:$topic, controller_run_id:$run_id, controller_run_attempt:$run_attempt, verified_at:$verified_at}
   }' > "$HISTORY_FILE"
@@ -144,13 +153,17 @@ jq -e \
   --argjson generation "$NEXT_GENERATION" \
   --argjson previous_generation "$GENERATION" \
   --arg previous_state_sha256 "$PREVIOUS_STATE_SHA256" \
-  --arg state_sha256 "$NEW_STATE_SHA256" '
+  --arg state_sha256 "$NEW_STATE_SHA256" \
+  --arg authority_sha256 "$AUTHORITY_SHA256" \
+  --argjson authority_policy_version "$AUTHORITY_POLICY_VERSION" '
     .identity == $identity and
     .generation == $generation and
     .previous_generation == $previous_generation and
     .previous_state_sha256 == $previous_state_sha256 and
     .state_sha256 == $state_sha256 and
+    .authority.sha256 == $authority_sha256 and
+    .authority.policy_version == $authority_policy_version and
     (.verification.method == "external_exact_message")
   ' "$HISTORY_FILE" >/dev/null
 
-echo "LINEAGE RECORDED $HISTORY_FILE state_sha256=$NEW_STATE_SHA256"
+echo "LINEAGE RECORDED $HISTORY_FILE state_sha256=$NEW_STATE_SHA256 authority_sha256=$AUTHORITY_SHA256"
