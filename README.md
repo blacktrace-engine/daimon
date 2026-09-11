@@ -6,7 +6,9 @@
 > Not an agent.
 > Not a swarm.
 >
-> A **daimon** is an entity that continuously exercises cognition against reality.
+> A **daimon** is an entity whose identity and state persist across episodes of cognition and action.
+
+A daimon is not a continuously running model. It may sleep for minutes, days, or months. What persists is the entity: its state, memory, commitments, authority, unresolved goals, verified outcomes, and the mechanisms required to resume cognition when reality changes.
 
 ---
 
@@ -16,26 +18,26 @@ Models are not minds.
 
 A model can infer.
 It can reason.
-It can remember what is placed in its context.
+It can use whatever memory is placed in its context.
 
-Then the process ends.
+Then the invocation ends.
 
-The context disappears.
-The worker dies.
-The next invocation begins again.
+The worker may die.
+The context may disappear.
+The next invocation may begin from somewhere else.
 
-We call this an agent.
+We call systems built around this an agent.
 
 Then we add more agents.
 
-But multiplying ephemeral inference does not create persistent intelligence.
+But multiplying ephemeral inference does not by itself create persistent intelligence.
 
 **A swarm of processes is not a mind.**
 
 Daimon starts from a different premise:
 
-> **The intelligence is already in the model.**
-> **The missing primitive is the entity that can continuously exercise it.**
+> **The model supplies cognition.**
+> **The missing primitive is the entity that can persist while cognition is exercised.**
 
 ---
 
@@ -46,6 +48,7 @@ A **daimon** is a persistent synthetic intelligence composed of:
 - cognition
 - memory
 - continuity
+- identity
 - intent
 - bounded agency
 - environmental feedback
@@ -59,7 +62,7 @@ It may intend to buy an aircraft.
 
 That does not mean an aircraft appears.
 
-It must possess the means, interfaces, resources and circumstances necessary for the action.
+It must possess the means, interfaces, resources, authority and circumstances necessary for the action.
 
 **Agency emerges from capability × affordance × state.**
 
@@ -69,11 +72,39 @@ Reality gets to answer.
 
 ---
 
+## Identity
+
+A daimon is not identified by the process currently executing it.
+
+Workers are replaceable.
+
+Models are replaceable.
+
+Sessions are replaceable.
+
+Containers are replaceable.
+
+The daimon persists through a durable lineage of:
+
+- state
+- memory
+- commitments
+- permissions
+- unresolved goals
+- verified outcomes
+- learned constraints
+
+A fresh worker becomes an execution of the same daimon only by recovering that lineage.
+
+**Continuity is not process survival.**
+
+**Continuity is stateful identity across process death.**
+
+---
+
 ## The invariant
 
-A daimon may not claim that something happened
-
-unless the runtime can establish that it happened.
+A daimon may not promote a claimed state transition to fact unless the runtime can establish that it occurred.
 
 It may not claim to have:
 
@@ -82,7 +113,7 @@ It may not claim to have:
 - completed something it did not verify
 - acted where no action occurred
 - learned where no durable state changed
-- continued where its state was lost
+- continued where its identity state was lost
 
 **Inference is not evidence.**
 
@@ -91,6 +122,8 @@ It may not claim to have:
 **Execution is not outcome.**
 
 **Claim is not reality.**
+
+Observation is also a state transition when it changes what the daimon knows. Such transitions require provenance, freshness and evidence just as actions require verification.
 
 ---
 
@@ -101,34 +134,33 @@ It may not claim to have:
         │                                          │
         ▼                                          │
      EVENT                                          │
-        │                                            │
-        ▼                                            │
-   RETRIEVE STATE                                    │
-        │                                            │
-        ▼                                            │
-   SELECT CONTEXT                                    │
-        │                                            │
-        ▼                                            │
-      INFER                                          │
-        │                                            │
-        ▼                                            │
-    AUTHORIZE                                        │
-        │                                            │
-        ▼                                            │
-      ACT                                            │
-        │                                            │
-        ▼                                            │
-     VERIFY ──────────────── reality                 │
-        │                                            │
-        ▼                                            │
-     MEASURE                                         │
-        │                                            │
-        ▼                                            │
-    PERSIST                                          │
-        │                                            │
-        ▼                                            │
+        │                                           │
+        ▼                                           │
+   RETRIEVE STATE                                   │
+        │                                           │
+        ▼                                           │
+   SELECT CONTEXT                                   │
+        │                                           │
+        ▼                                           │
+      INFER                                         │
+        │                                           │
+        ▼                                           │
+    AUTHORIZE                                       │
+        │                                           │
+        ▼                                           │
+      ACT                                           │
+        │                                           │
+        ▼                                           │
+     VERIFY ──────────────── reality                │
+        │                                           │
+        ▼                                           │
+     MEASURE                                        │
+        │                                           │
+        ▼                                           │
+    PERSIST                                         │
+        │                                           │
+        ▼                                           │
      UPDATE ─────────────────────────────────────────┘
-
 ```
 
 The process may die.
@@ -144,11 +176,11 @@ external event occurs
       ↓
 fresh worker wakes
       ↓
-context reconstructs
+identity and context reconstruct
       ↓
 cognition resumes
       ↓
-affordances are evaluated
+affordances and authority are evaluated
       ↓
 action occurs
       ↓
@@ -157,7 +189,6 @@ reality is independently observed
 outcome persists
       ↓
 the daimon becomes different
-
 ```
 
 That last step matters.
@@ -174,12 +205,12 @@ An agent is commonly model + prompt + tools + loop.
 
 A daimon is an entity.
 
-The distinction is continuity.
+The distinction is continuity of identity, state and consequence.
 
 ```text
 MODEL
   │
-  │ inference
+  │ cognition
   ▼
 PROCESS
   │
@@ -190,7 +221,6 @@ AGENT
   │ continuity + memory + outcomes + affordances
   ▼
 DAIMON
-
 ```
 
 A daimon may use agents.
@@ -201,7 +231,7 @@ A daimon may create temporary workers.
 
 None of those workers are the daimon.
 
-They are processes through which the daimon exercises its cognition.
+They are processes through which the daimon exercises cognition.
 
 ---
 
@@ -225,9 +255,9 @@ It begins with:
 
 A daimon has a desired outcome.
 
-The runtime turns that outcome into explicit conditions.
+The runtime turns that outcome into explicit conditions and runtime guarantees.
 
-Those conditions constrain what may be considered progress.
+Those guarantees constrain which state transitions are admissible.
 
 Reality determines whether the conditions were satisfied.
 
@@ -243,10 +273,46 @@ execution
 independent observation
        ↓
 verified reality
-
 ```
 
 Nothing gets promoted from *believed* to *true* merely because a model generated a convincing sentence.
+
+The runtime therefore owns at least these concerns:
+
+- context salience
+- freshness and stale-state handling
+- authority
+- durability
+- wake-up truthfulness
+- independent verification
+- outcome memory
+- invalid-state prevention
+- retry discipline
+- cross-run learning
+
+---
+
+## Runtime guarantees
+
+A daimon is only as real as the mechanisms that preserve it.
+
+The runtime must make unsupported states unreachable.
+
+Examples:
+
+- no monitoring claim without a real trigger or re-entry mechanism
+- no durable goal whose required state exists only in ephemeral storage
+- no consequential mutation without scoped authority
+- no completion claim without an observable postcondition
+- no stale remembered state outranking fresher observed state
+- no blind repetition of the same failed action without changed evidence
+- no outcome claim sourced only from the model's own prior assertion
+- no persistent memory without explicit storage and retrieval semantics
+- no continuation claim if the identity lineage cannot be recovered
+
+The model may propose the next state.
+
+**The runtime decides whether that state is reachable.**
 
 ---
 
@@ -254,17 +320,49 @@ Nothing gets promoted from *believed* to *true* merely because a model generated
 
 We have spent decades making machines execute instructions.
 
-We are now making machines generate intelligence.
+We are now making machines generate increasingly capable cognition.
 
-The next primitive is not another model.
+The next primitive is not necessarily another model.
 
-It is the **entity that persists while intelligence is being exercised**.
+It is the **entity that persists while cognition is being exercised**.
 
 > **Model → process → agent → daimon**
 
 Not a hierarchy of intelligence.
 
 A progression of **entityhood**.
+
+---
+
+## Acceptance
+
+A daimon is not proven by a framework booting successfully.
+
+The minimum continuity test is:
+
+```text
+session/process dies
+      ↓
+durable state survives
+      ↓
+external event occurs
+      ↓
+a fresh worker wakes without a user message
+      ↓
+identity and context reconstruct from durable state
+      ↓
+authorized action executes
+      ↓
+the external effect is independently verified
+      ↓
+the verified outcome persists
+      ↓
+the worker may die again without destroying continuity
+```
+
+If the system cannot demonstrate that sequence, it may still be a useful agent framework, simulator, or prototype.
+
+It is not yet a proven daimon runtime.
 
 ---
 
@@ -284,7 +382,6 @@ SPEC.md
 ARCHITECTURE.md
 ACCEPTANCE.md
 LICENSE
-
 ```
 
 No magic is assumed.
@@ -299,6 +396,6 @@ Every claimed consequence must be verifiable.
 
 ## One rule
 
-> **If the daimon cannot prove that reality changed, the daimon must behave as though it did not.**
+> **No claimed state transition becomes truth without evidence.**
 
 Everything else follows from this.
