@@ -76,6 +76,9 @@ jobs:
           git config user.email "daimon@users.noreply.github.com"
 
           git add state/daimon.json
+          if [ -d state/history ]; then
+            git add state/history
+          fi
           if git diff --cached --quiet; then
             echo "No verified state change to persist"
             exit 0
@@ -83,6 +86,13 @@ jobs:
 
           LOCAL_GENERATION=$(jq -r '.generation' state/daimon.json)
           EXPECTED_REMOTE_GENERATION=$((LOCAL_GENERATION - 1))
+          HISTORY_FILE=$(printf 'state/history/%06d.json' "$LOCAL_GENERATION")
+
+          if [ -f "$HISTORY_FILE" ]; then
+            HISTORY_GENERATION=$(jq -r '.generation' "$HISTORY_FILE")
+            test "$HISTORY_GENERATION" -eq "$LOCAL_GENERATION"
+          fi
+
           git commit -m "Persist Daimon state after verified revival"
 
           # Repository writes unrelated to Daimon state are allowed to land while
@@ -93,6 +103,13 @@ jobs:
           REMOTE_GENERATION=$(git show origin/main:state/daimon.json | jq -r '.generation')
           if [ "$REMOTE_GENERATION" -ne "$EXPECTED_REMOTE_GENERATION" ]; then
             echo "Refusing stale state write: expected remote generation $EXPECTED_REMOTE_GENERATION, found $REMOTE_GENERATION" >&2
+            exit 1
+          fi
+
+          # A lineage entry is append-only. If the target generation already
+          # exists remotely, another controller has claimed it and this run is stale.
+          if git cat-file -e "origin/main:$HISTORY_FILE" 2>/dev/null; then
+            echo "Refusing duplicate lineage entry for generation $LOCAL_GENERATION" >&2
             exit 1
           fi
 
