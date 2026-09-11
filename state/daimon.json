@@ -1,9 +1,16 @@
 {
   "identity": "daimon-001",
-  "generation": 3,
+  "generation": 4,
   "status": "sleeping",
-  "last_verified_outcome": "revival-generation-3-verified",
-  "last_session_id": "sesn_01DFdtwcxENbqxg1qx8dAG2Z",
-  "last_nonce": "4a6146da389f039bf986fc5acf631c44",
-  "updated_at": "2026-09-11T16:06:16Z"
+  "last_verified_outcome": "revival-generation-4-verified",
+  "last_session_id": "sesn_01AXkVDqJPtzzifcEfg9kobK",
+  "last_nonce": "9eb13df004108cf2affb7b9a19c06652",
+  "updated_at": "2026-09-11T17:01:37Z",
+  "last_verification": {
+    "method": "external_exact_message",
+    "topic": "daimon-revival-34625319860-1",
+    "controller_run_id": "34625319860",
+    "controller_run_attempt": "1",
+    "verified_at": "2026-09-11T17:01:37Z"
+  }
 }
