@@ -30,6 +30,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Mint GitHub OIDC token
         uses: actions/github-script@v8
@@ -72,10 +74,27 @@ jobs:
           set -euo pipefail
           git config user.name "Daimon Revival Controller"
           git config user.email "daimon@users.noreply.github.com"
+
           git add state/daimon.json
           if git diff --cached --quiet; then
             echo "No verified state change to persist"
             exit 0
           fi
+
+          LOCAL_GENERATION=$(jq -r '.generation' state/daimon.json)
+          EXPECTED_REMOTE_GENERATION=$((LOCAL_GENERATION - 1))
           git commit -m "Persist Daimon state after verified revival"
-          git push
+
+          # Repository writes unrelated to Daimon state are allowed to land while
+          # cognition is running. Rebase over them only if durable state itself
+          # has not advanced. This is a generation compare-and-swap: stale runs
+          # may never overwrite a newer identity state.
+          git fetch origin main
+          REMOTE_GENERATION=$(git show origin/main:state/daimon.json | jq -r '.generation')
+          if [ "$REMOTE_GENERATION" -ne "$EXPECTED_REMOTE_GENERATION" ]; then
+            echo "Refusing stale state write: expected remote generation $EXPECTED_REMOTE_GENERATION, found $REMOTE_GENERATION" >&2
+            exit 1
+          fi
+
+          git rebase origin/main
+          git push origin HEAD:main
