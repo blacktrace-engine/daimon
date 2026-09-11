@@ -36,6 +36,19 @@ jobs:
         with:
           fetch-depth: 0
 
+      # A queued push workflow normally checks out the SHA that triggered it.
+      # With cancel-in-progress disabled, an earlier revival may have persisted a
+      # newer durable generation before this queued run starts. Always move the
+      # working tree to the current remote head before inspecting or waking state,
+      # so serialized revivals continue from reality rather than a stale event SHA.
+      - name: Synchronize queued wake to current durable head
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git reset --hard origin/main
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
+
       - name: Verify durable lineage before wake
         shell: bash
         run: bash scripts/verify-lineage.sh
