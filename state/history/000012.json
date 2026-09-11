@@ -1,0 +1,20 @@
+{
+  "identity": "daimon-001",
+  "generation": 12,
+  "previous_generation": 11,
+  "previous_state_sha256": "8189a544f3c4cce75884c20e6ed9b838217f63c7509e269c51b7eb88053104fd",
+  "state_sha256": "9f6c6b243a4cae9cd3c124fa7b3a25f82f58abdf245d13f82bfb731d00f13973",
+  "previous_history_sha256": "6c2955188bbf7ebbd11ed4f74192bbfb3100ceddff06fd2f4f85d3635c1550f8",
+  "authority": {
+    "policy_version": 1,
+    "sha256": "f46fa17e9f0e62f5794d39a14c06cc3f9e6356feb57fbc95979f4fb2091bd0a0"
+  },
+  "verified_outcome": "revival-generation-12-verified",
+  "verification": {
+    "method": "external_exact_message",
+    "topic": "daimon-revival-34651995954-1",
+    "controller_run_id": "34651995954",
+    "controller_run_attempt": "1",
+    "verified_at": "2026-09-11T22:00:16Z"
+  }
+}
