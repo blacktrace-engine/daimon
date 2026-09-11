@@ -1,12 +1,14 @@
-name: daimon-heartbeat
+name: daimon-revival
 
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'state/daimon.json'
 
 permissions:
   id-token: write
-  contents: read
+  contents: write
 
 env:
   FEDERATION_RULE_ID: fdrl_01JomjciyfNRwW4j2BuntX1p
@@ -17,9 +19,11 @@ env:
   ENVIRONMENT_ID: env_01MABNSRu46R7pemtfWq4Ljv
 
 jobs:
-  heartbeat:
+  revive:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - name: Mint GitHub OIDC token
         uses: actions/github-script@v8
         with:
@@ -51,67 +55,16 @@ jobs:
           echo "::add-mask::$TOKEN"
           echo "ANTHROPIC_TOKEN=$TOKEN" >> "$GITHUB_ENV"
 
-      - name: Create heartbeat identity
+      - name: Revive from durable state
         shell: bash
-        run: |
-          NONCE=$(openssl rand -hex 16)
-          TOPIC="daimon-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
-          echo "NONCE=$NONCE" >> "$GITHUB_ENV"
-          echo "TOPIC=$TOPIC" >> "$GITHUB_ENV"
+        run: bash scripts/revive.sh
 
-      - name: Create fresh Managed Agents session
+      - name: Persist verified state
         shell: bash
         run: |
           set -euo pipefail
-          RESPONSE=$(curl -fsS 'https://api.anthropic.com/v1/sessions?beta=true' \
-            -H "Authorization: Bearer $ANTHROPIC_TOKEN" \
-            -H 'anthropic-version: 2023-06-01' \
-            -H 'anthropic-beta: managed-agents-2026-04-01' \
-            -H 'content-type: application/json' \
-            -d "{\"agent\":{\"type\":\"agent\",\"id\":\"$AGENT_ID\"},\"environment_id\":\"$ENVIRONMENT_ID\"}")
-          SESSION_ID=$(jq -r '.id' <<<"$RESPONSE")
-          test -n "$SESSION_ID"
-          test "$SESSION_ID" != "null"
-          echo "SESSION_ID=$SESSION_ID" >> "$GITHUB_ENV"
-          echo "Fresh session created: $SESSION_ID"
-
-      - name: Send bounded heartbeat action
-        shell: bash
-        run: |
-          set -euo pipefail
-          MESSAGE=$(cat <<EOF
-          Daimon heartbeat test.
-
-          Use your available network or shell tools to POST the exact text below to the URL below.
-
-          Text: $NONCE
-          URL: https://ntfy.sh/$TOPIC
-
-          The POST itself is the task. Do not merely claim success. Once attempted, stop.
-          EOF
-          )
-          BODY=$(jq -n --arg message "$MESSAGE" '{events:[{type:"user.message",content:[{type:"text",text:$message}]}]}')
-          curl -fsS "https://api.anthropic.com/v1/sessions/$SESSION_ID/events?beta=true" \
-            -H "Authorization: Bearer $ANTHROPIC_TOKEN" \
-            -H 'anthropic-version: 2023-06-01' \
-            -H 'anthropic-beta: managed-agents-2026-04-01' \
-            -H 'content-type: application/json' \
-            -d "$BODY" >/dev/null
-
-      - name: Independently verify external effect
-        shell: bash
-        run: |
-          set -euo pipefail
-          for attempt in $(seq 1 36); do
-            EVENTS=$(curl -fsS "https://ntfy.sh/$TOPIC/json?poll=1&since=all" || true)
-            if grep -Fq "$NONCE" <<<"$EVENTS"; then
-              echo "DAIMON HEARTBEAT VERIFIED"
-              echo "session=$SESSION_ID"
-              echo "nonce=$NONCE"
-              echo "topic=$TOPIC"
-              exit 0
-            fi
-            sleep 5
-          done
-          echo "FAILED: no independently observable external effect"
-          exit 1
+          git config user.name "Daimon Revival Controller"
+          git config user.email "daimon@users.noreply.github.com"
+          git add state/daimon.json
+          git commit -m "Persist Daimon state after verified revival"
+          git push
