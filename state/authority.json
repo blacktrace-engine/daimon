@@ -1,0 +1,18 @@
+{
+  "policy_version": 1,
+  "identity": "daimon-001",
+  "status": "active",
+  "max_generation_step": 1,
+  "require_verified_lineage": true,
+  "allowed_actions": [
+    "revive",
+    "verify_external",
+    "persist_state"
+  ],
+  "bindings": {
+    "repository": "blacktrace-engine/daimon",
+    "branch": "main",
+    "worker_provider": "api.anthropic.com",
+    "verification_provider": "ntfy.sh"
+  }
+}
