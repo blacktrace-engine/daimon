@@ -5,8 +5,10 @@ on:
     branches: [main]
     paths:
       - 'wake/**'
+      - 'state/authority.json'
       - 'scripts/revive.sh'
       - 'scripts/verify-lineage.sh'
+      - 'scripts/verify-authority.sh'
       - '.github/workflows/anthropic-wif-test.yml'
 
 permissions:
@@ -37,6 +39,10 @@ jobs:
       - name: Verify durable lineage before wake
         shell: bash
         run: bash scripts/verify-lineage.sh
+
+      - name: Verify authority before credentials
+        shell: bash
+        run: bash scripts/verify-authority.sh
 
       - name: Mint GitHub OIDC token
         uses: actions/github-script@v8
