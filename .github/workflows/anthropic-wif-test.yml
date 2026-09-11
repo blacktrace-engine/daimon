@@ -1,17 +1,26 @@
-name: anthropic-wif-test
+name: daimon-heartbeat
 
 on:
   push:
+    branches: [main]
 
 permissions:
   id-token: write
   contents: read
 
+env:
+  FEDERATION_RULE_ID: fdrl_01JomjciyfNRwW4j2BuntX1p
+  ORGANIZATION_ID: 8c8499b6-971b-401c-9e51-fc548e5e6a41
+  SERVICE_ACCOUNT_ID: svac_013vxcAtvp1Bn56hJfziEjuf
+  WORKSPACE_ID: wrkspc_01MpgoxyHuuYtoAc38cnqiCn
+  AGENT_ID: agent_011rM3Hc2fgGVpf6amGHSkXz
+  ENVIRONMENT_ID: env_01MABNSRu46R7pemtfWq4Ljv
+
 jobs:
-  call-claude:
+  heartbeat:
     runs-on: ubuntu-latest
     steps:
-      - name: Fetch GitHub OIDC token
+      - name: Mint GitHub OIDC token
         uses: actions/github-script@v8
         with:
           script: |
@@ -19,21 +28,90 @@ jobs:
             core.setSecret(token);
             core.exportVariable('JWT', token);
 
-      - name: Exchange for an Anthropic access token
+      - name: Exchange for Anthropic token
+        shell: bash
         run: |
           set -euo pipefail
-          curl -sS https://api.anthropic.com/v1/oauth/token \
-            -H "content-type: application/json" \
-            --data @- <<JSON | jq 'with_entries(if (.key | test("token$")) then .value = "<redacted>" else . end)'
+          RESPONSE=$(curl -fsS https://api.anthropic.com/v1/oauth/token \
+            -H 'content-type: application/json' \
+            --data @- <<JSON
           {
             "grant_type": "urn:ietf:params:oauth:grant-type:jwt-bearer",
             "assertion": "$JWT",
-            "federation_rule_id": "fdrl_01JomjciyfNRwW4j2BuntX1p",
-            "organization_id": "8c8499b6-971b-401c-9e51-fc548e5e6a41",
-            "service_account_id": "svac_013vxcAtvp1Bn56hJfziEjuf",
-            "workspace_id": "wrkspc_01MpgoxyHuuYtoAc38cnqiCn"
+            "federation_rule_id": "$FEDERATION_RULE_ID",
+            "organization_id": "$ORGANIZATION_ID",
+            "service_account_id": "$SERVICE_ACCOUNT_ID",
+            "workspace_id": "$WORKSPACE_ID"
           }
           JSON
+          )
+          TOKEN=$(jq -r '.access_token' <<<"$RESPONSE")
+          test -n "$TOKEN"
+          test "$TOKEN" != "null"
+          echo "::add-mask::$TOKEN"
+          echo "ANTHROPIC_TOKEN=$TOKEN" >> "$GITHUB_ENV"
 
-      - name: Confirm exchange
-        run: echo "WIF exchange completed"
+      - name: Create heartbeat identity
+        shell: bash
+        run: |
+          NONCE=$(openssl rand -hex 16)
+          TOPIC="daimon-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          echo "NONCE=$NONCE" >> "$GITHUB_ENV"
+          echo "TOPIC=$TOPIC" >> "$GITHUB_ENV"
+
+      - name: Create fresh Managed Agents session
+        shell: bash
+        run: |
+          set -euo pipefail
+          RESPONSE=$(curl -fsS 'https://api.anthropic.com/v1/sessions?beta=true' \
+            -H "Authorization: Bearer $ANTHROPIC_TOKEN" \
+            -H 'anthropic-version: 2023-06-01' \
+            -H 'anthropic-beta: managed-agents-2026-04-01' \
+            -H 'content-type: application/json' \
+            -d "{\"agent\":{\"type\":\"agent\",\"id\":\"$AGENT_ID\"},\"environment_id\":\"$ENVIRONMENT_ID\"}")
+          SESSION_ID=$(jq -r '.id' <<<"$RESPONSE")
+          test -n "$SESSION_ID"
+          test "$SESSION_ID" != "null"
+          echo "SESSION_ID=$SESSION_ID" >> "$GITHUB_ENV"
+          echo "Fresh session created: $SESSION_ID"
+
+      - name: Send bounded heartbeat action
+        shell: bash
+        run: |
+          set -euo pipefail
+          MESSAGE=$(cat <<EOF
+          Daimon heartbeat test.
+
+          Use your available network or shell tools to POST the exact text below to the URL below.
+
+          Text: $NONCE
+          URL: https://ntfy.sh/$TOPIC
+
+          The POST itself is the task. Do not merely claim success. Once attempted, stop.
+          EOF
+          )
+          BODY=$(jq -n --arg message "$MESSAGE" '{events:[{type:"user.message",content:[{type:"text",text:$message}]}]}')
+          curl -fsS "https://api.anthropic.com/v1/sessions/$SESSION_ID/events?beta=true" \
+            -H "Authorization: Bearer $ANTHROPIC_TOKEN" \
+            -H 'anthropic-version: 2023-06-01' \
+            -H 'anthropic-beta: managed-agents-2026-04-01' \
+            -H 'content-type: application/json' \
+            -d "$BODY" >/dev/null
+
+      - name: Independently verify external effect
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 36); do
+            EVENTS=$(curl -fsS "https://ntfy.sh/$TOPIC/json?poll=1&since=all" || true)
+            if grep -Fq "$NONCE" <<<"$EVENTS"; then
+              echo "DAIMON HEARTBEAT VERIFIED"
+              echo "session=$SESSION_ID"
+              echo "nonce=$NONCE"
+              echo "topic=$TOPIC"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "FAILED: no independently observable external effect"
+          exit 1
