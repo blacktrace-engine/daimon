@@ -34,3 +34,6 @@ jobs:
             "workspace_id": "wrkspc_01MpgoxyHuuYtoAc38cnqiCn"
           }
           JSON
+
+      - name: Confirm exchange
+        run: echo "WIF exchange completed"
