@@ -6,6 +6,7 @@ on:
     paths:
       - 'wake/**'
       - 'scripts/revive.sh'
+      - 'scripts/verify-lineage.sh'
       - '.github/workflows/anthropic-wif-test.yml'
 
 permissions:
@@ -32,6 +33,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Verify durable lineage before wake
+        shell: bash
+        run: bash scripts/verify-lineage.sh
 
       - name: Mint GitHub OIDC token
         uses: actions/github-script@v8
