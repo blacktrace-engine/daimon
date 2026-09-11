@@ -3,12 +3,18 @@ name: daimon-revival
 on:
   push:
     branches: [main]
-    paths-ignore:
-      - 'state/daimon.json'
+    paths:
+      - 'wake/**'
+      - 'scripts/revive.sh'
+      - '.github/workflows/anthropic-wif-test.yml'
 
 permissions:
   id-token: write
   contents: write
+
+concurrency:
+  group: daimon-revival
+  cancel-in-progress: false
 
 env:
   FEDERATION_RULE_ID: fdrl_01JomjciyfNRwW4j2BuntX1p
@@ -21,6 +27,7 @@ env:
 jobs:
   revive:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
@@ -66,5 +73,9 @@ jobs:
           git config user.name "Daimon Revival Controller"
           git config user.email "daimon@users.noreply.github.com"
           git add state/daimon.json
+          if git diff --cached --quiet; then
+            echo "No verified state change to persist"
+            exit 0
+          fi
           git commit -m "Persist Daimon state after verified revival"
           git push
